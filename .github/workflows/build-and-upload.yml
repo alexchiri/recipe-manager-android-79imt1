@@ -116,8 +116,9 @@ jobs:
           VERSION_CODE: ${{ steps.new_version.outputs.new_version_code }}
           RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
         run: |
+          AUTH_HEADER="Bearer ${APP_HOSTING_API_KEY}"
           RESPONSE=$(curl -X POST "${APP_HOSTING_URL}/api/upload" \
-            -H "Authorization: Bearer ${APP_HOSTING_API_KEY}" \
+            -H "Authorization: ${AUTH_HEADER}" \
             -F "file=@app/build/outputs/apk/release/app-release-signed.apk" \
             -F "package_name=com.kroslabs.recipemanager" \
             -F "app_name=Recipe Manager" \
