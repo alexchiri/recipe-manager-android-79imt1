@@ -39,11 +39,12 @@ class MealPlanViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(MealPlanUiState())
     val uiState: StateFlow<MealPlanUiState> = _uiState.asStateFlow()
 
-    private val dateRange: Pair<LocalDate, LocalDate>
-        get() {
-            val today = LocalDate.now()
-            return today.minusDays(90) to today.plusDays(180)
-        }
+    private fun calculateDateRange(): Pair<LocalDate, LocalDate> {
+        val today = LocalDate.now()
+        return today.minusDays(90) to today.plusDays(180)
+    }
+
+    private val dateRange = calculateDateRange()
 
     init {
         viewModelScope.launch {
