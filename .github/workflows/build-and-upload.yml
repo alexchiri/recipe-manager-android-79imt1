@@ -109,15 +109,21 @@ jobs:
             app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload APK to hosting service
+        env:
+          APP_HOSTING_URL: ${{ secrets.APP_HOSTING_URL }}
+          APP_HOSTING_API_KEY: ${{ secrets.APP_HOSTING_API_KEY }}
+          VERSION: ${{ steps.new_version.outputs.new_version }}
+          VERSION_CODE: ${{ steps.new_version.outputs.new_version_code }}
+          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
         run: |
-          RESPONSE=$(curl -X POST "${{ secrets.APP_HOSTING_URL }}/api/upload" \
-            -H "Authorization: Bearer ${{ secrets.APP_HOSTING_API_KEY }}" \
+          RESPONSE=$(curl -X POST "${APP_HOSTING_URL}/api/upload" \
+            -H "Authorization: Bearer ${APP_HOSTING_API_KEY}" \
             -F "file=@app/build/outputs/apk/release/app-release-signed.apk" \
             -F "package_name=com.kroslabs.recipemanager" \
             -F "app_name=Recipe Manager" \
-            -F "version=${{ steps.new_version.outputs.new_version }}" \
-            -F "version_code=${{ steps.new_version.outputs.new_version_code }}" \
-            -F "release_notes=${{ github.event.inputs.release_notes }}")
+            -F "version=${VERSION}" \
+            -F "version_code=${VERSION_CODE}" \
+            -F "release_notes=${RELEASE_NOTES}")
 
           echo "Upload response: $RESPONSE"
 
