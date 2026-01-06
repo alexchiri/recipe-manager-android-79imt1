@@ -109,29 +109,31 @@ jobs:
             app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload APK to hosting service
-        env:
-          APP_HOSTING_URL: ${{ secrets.APP_HOSTING_URL }}
-          APP_HOSTING_API_KEY: ${{ secrets.APP_HOSTING_API_KEY }}
-          VERSION: ${{ steps.new_version.outputs.new_version }}
-          VERSION_CODE: ${{ steps.new_version.outputs.new_version_code }}
-          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
         run: |
-          AUTH_HEADER="Bearer ${APP_HOSTING_API_KEY}"
-          RESPONSE=$(curl -X POST "${APP_HOSTING_URL}/api/upload" \
-            -H "Authorization: ${AUTH_HEADER}" \
-            -F "file=@app/build/outputs/apk/release/app-release-signed.apk" \
-            -F "package_name=com.kroslabs.recipemanager" \
-            -F "app_name=Recipe Manager" \
-            -F "version=${VERSION}" \
-            -F "version_code=${VERSION_CODE}" \
-            -F "release_notes=${RELEASE_NOTES}")
+          NOTES="${{ github.event.inputs.release_notes }}"
 
-          echo "Upload response: $RESPONSE"
+          # Capture both HTTP status code and response body
+          HTTP_RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+            -H "X-API-Key: ${{ secrets.APP_HOSTING_API_KEY }}" \
+            -F "apk=@app/build/outputs/apk/release/app-release-signed.apk" \
+            -F "packageName=com.kroslabs.recipemanager" \
+            -F "appName=Recipe Manager" \
+            -F "versionName=${{ steps.new_version.outputs.new_version }}" \
+            -F "versionCode=${{ steps.new_version.outputs.new_version_code }}" \
+            -F "releaseNotes=$NOTES" \
+            ${{ secrets.APP_HOSTING_URL }}/api/upload)
 
-          if echo "$RESPONSE" | grep -q '"success":true'; then
+          # Extract status code (last line) and body (everything else)
+          HTTP_STATUS=$(echo "$HTTP_RESPONSE" | tail -n1)
+          RESPONSE_BODY=$(echo "$HTTP_RESPONSE" | sed '$d')
+
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Response: $RESPONSE_BODY"
+
+          if [ "$HTTP_STATUS" -ge 200 ] && [ "$HTTP_STATUS" -lt 300 ]; then
             echo "Upload successful!"
           else
-            echo "Upload failed!"
+            echo "Upload failed with status $HTTP_STATUS"
             exit 1
           fi
 
