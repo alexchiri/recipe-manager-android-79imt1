@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Recepthanterare</string>
+
+    <!-- Navigation -->
+    <string name="nav_recipes">Recept</string>
+    <string name="nav_meal_plan">Måltidsplan</string>
+    <string name="nav_settings">Inställningar</string>
+
+    <!-- Recipe List -->
+    <string name="search_recipes">Sök recept…</string>
+    <string name="no_recipes">Inga recept än</string>
+    <string name="no_recipes_found">Inga recept hittades</string>
+    <string name="add_recipe">Lägg till recept</string>
+    <string name="filter">Filtrera</string>
+    <string name="sort">Sortera</string>
+    <string name="sort_by_date">Efter datum</string>
+    <string name="sort_by_rating">Efter betyg</string>
+    <string name="clear_filters">Rensa filter</string>
+
+    <!-- Recipe Detail -->
+    <string name="ingredients">Ingredienser</string>
+    <string name="instructions">Instruktioner</string>
+    <string name="notes">Anteckningar</string>
+    <string name="servings">Portioner</string>
+    <string name="prep_time">Förberedelsetid</string>
+    <string name="cook_time">Tillagningstid</string>
+    <string name="rating">Betyg</string>
+    <string name="edit">Redigera</string>
+    <string name="delete">Radera</string>
+    <string name="share">Dela</string>
+    <string name="share_ingredients">Dela ingredienser</string>
+    <string name="confirm_delete">Bekräfta radering</string>
+    <string name="delete_recipe_message">Är du säker på att du vill radera detta recept?</string>
+    <string name="cancel">Avbryt</string>
+    <string name="save">Spara</string>
+    <string name="add_notes">Lägg till anteckningar…</string>
+
+    <!-- Add Recipe -->
+    <string name="add_recipe_title">Lägg till recept</string>
+    <string name="from_camera">Från kamera</string>
+    <string name="from_photos">Från bilder</string>
+    <string name="from_text">Från text</string>
+    <string name="from_url">Från URL</string>
+    <string name="from_youtube">Från YouTube</string>
+    <string name="paste_recipe_text">Klistra in recepttext här…</string>
+    <string name="enter_url">Ange recept-URL…</string>
+    <string name="enter_youtube_url">Ange YouTube-URL…</string>
+    <string name="extracting_recipe">Extraherar recept…</string>
+    <string name="extract">Extrahera</string>
+    <string name="review_recipe">Granska recept</string>
+    <string name="recipe_title">Recepttitel</string>
+    <string name="add_ingredient">Lägg till ingrediens</string>
+    <string name="add_instruction">Lägg till instruktion</string>
+    <string name="select_tags">Välj taggar</string>
+
+    <!-- Meal Plan -->
+    <string name="meal_plan_title">Måltidsplan</string>
+    <string name="lunch">Lunch</string>
+    <string name="dinner">Middag</string>
+    <string name="today">Idag</string>
+    <string name="tomorrow">Imorgon</string>
+    <string name="yesterday">Igår</string>
+    <string name="empty_slot">Tryck för att lägga till</string>
+    <string name="swap_meals">Byt måltider</string>
+    <string name="remove_meal">Ta bort</string>
+    <string name="select_recipe">Välj recept</string>
+    <string name="generate_summary">Generera sammanfattning</string>
+    <string name="this_week">Denna vecka</string>
+    <string name="next_week">Nästa vecka</string>
+    <string name="custom_range">Anpassat intervall</string>
+    <string name="include_shopping_list">Inkludera inköpslista</string>
+    <string name="share_as_text">Dela som text</string>
+    <string name="share_as_image">Dela som bild</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Inställningar</string>
+    <string name="api_key">Claude API-nyckel</string>
+    <string name="api_key_hint">sk-ant-…</string>
+    <string name="api_key_saved">API-nyckel sparad</string>
+    <string name="cloud_sync">Molnsynkronisering</string>
+    <string name="cloud_sync_description">Synkronisera recept mellan enheter</string>
+    <string name="sync_now">Synka nu</string>
+    <string name="last_sync">Senaste synk: %1$s</string>
+    <string name="never_synced">Aldrig synkad</string>
+    <string name="language">Språk</string>
+    <string name="english">English</string>
+    <string name="swedish">Svenska</string>
+    <string name="romanian">Română</string>
+    <string name="import_data">Importera data</string>
+    <string name="export_data">Exportera data</string>
+    <string name="export_all">Exportera allt</string>
+    <string name="export_recipes">Exportera endast recept</string>
+    <string name="export_meal_plans">Exportera endast måltidsplaner</string>
+
+    <!-- Tags -->
+    <string name="tag_vegetarian">Vegetarisk</string>
+    <string name="tag_vegan">Vegansk</string>
+    <string name="tag_gluten_free">Glutenfri</string>
+    <string name="tag_lactose_free">Laktosfri</string>
+    <string name="tag_nut_free">Nötfri</string>
+    <string name="tag_low_carb">Lågkolhydrat</string>
+    <string name="tag_keto">Keto</string>
+    <string name="tag_paleo">Paleo</string>
+    <string name="tag_breakfast">Frukost</string>
+    <string name="tag_lunch">Lunch</string>
+    <string name="tag_dinner">Middag</string>
+    <string name="tag_dessert">Efterrätt</string>
+    <string name="tag_snack">Mellanmål</string>
+    <string name="tag_beverage">Dryck</string>
+    <string name="tag_appetizer">Förrätt</string>
+    <string name="tag_main_course">Huvudrätt</string>
+    <string name="tag_side_dish">Tillbehör</string>
+    <string name="tag_soup">Soppa</string>
+    <string name="tag_salad">Sallad</string>
+    <string name="tag_pork">Fläsk</string>
+    <string name="tag_chicken">Kyckling</string>
+    <string name="tag_beef">Nötkött</string>
+    <string name="tag_lamb">Lamm</string>
+    <string name="tag_turkey">Kalkon</string>
+    <string name="tag_fish">Fisk</string>
+    <string name="tag_seafood">Skaldjur</string>
+    <string name="tag_quick_easy">Snabb &amp; enkel</string>
+    <string name="tag_slow_cook">Långkok</string>
+
+    <!-- Tag Categories -->
+    <string name="category_dietary">Kostbegränsningar</string>
+    <string name="category_diet_styles">Koststilar</string>
+    <string name="category_meal_types">Måltidstyper</string>
+    <string name="category_courses">Rätter</string>
+    <string name="category_protein">Proteintyper</string>
+    <string name="category_cooking_style">Tillagningsstil</string>
+
+    <!-- Errors -->
+    <string name="error_no_api_key">Lägg till din Claude API-nyckel i Inställningar</string>
+    <string name="error_network">Nätverksfel. Kontrollera din anslutning.</string>
+    <string name="error_extraction">Kunde inte extrahera recept. Försök igen.</string>
+    <string name="error_rate_limit">API-gränsen nådd. Försök igen senare.</string>
+    <string name="error_invalid_url">Ogiltig URL</string>
+    <string name="error_empty_field">Detta fält krävs</string>
+
+    <!-- General -->
+    <string name="ok">OK</string>
+    <string name="yes">Ja</string>
+    <string name="no">Nej</string>
+    <string name="loading">Laddar…</string>
+    <string name="done">Klar</string>
+    <string name="unrated">Ej betygsatt</string>
+</resources>

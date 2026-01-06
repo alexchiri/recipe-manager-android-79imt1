@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <group android:scaleX="0.4"
+        android:scaleY="0.4"
+        android:translateX="32.4"
+        android:translateY="32.4">
+        <!-- Chef hat -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,15C42,15 32,25 32,37C32,40 33,43 35,46L35,75C35,78 37,80 40,80L68,80C71,80 73,78 73,75L73,46C75,43 76,40 76,37C76,25 66,15 54,15Z" />
+        <!-- Utensils -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M44,85L44,95M54,85L54,95M64,85L64,95"
+            android:strokeWidth="4"
+            android:strokeColor="#FF6B35" />
+        <!-- Chef hat band -->
+        <path
+            android:fillColor="#FF6B35"
+            android:pathData="M35,50L73,50L73,55L35,55Z" />
+    </group>
+</vector>

@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Manager Rețete</string>
+
+    <!-- Navigation -->
+    <string name="nav_recipes">Rețete</string>
+    <string name="nav_meal_plan">Plan Mese</string>
+    <string name="nav_settings">Setări</string>
+
+    <!-- Recipe List -->
+    <string name="search_recipes">Caută rețete…</string>
+    <string name="no_recipes">Nicio rețetă încă</string>
+    <string name="no_recipes_found">Nicio rețetă găsită</string>
+    <string name="add_recipe">Adaugă rețetă</string>
+    <string name="filter">Filtrează</string>
+    <string name="sort">Sortează</string>
+    <string name="sort_by_date">După dată</string>
+    <string name="sort_by_rating">După rating</string>
+    <string name="clear_filters">Șterge filtre</string>
+
+    <!-- Recipe Detail -->
+    <string name="ingredients">Ingrediente</string>
+    <string name="instructions">Instrucțiuni</string>
+    <string name="notes">Note</string>
+    <string name="servings">Porții</string>
+    <string name="prep_time">Timp preparare</string>
+    <string name="cook_time">Timp gătire</string>
+    <string name="rating">Rating</string>
+    <string name="edit">Editează</string>
+    <string name="delete">Șterge</string>
+    <string name="share">Distribuie</string>
+    <string name="share_ingredients">Distribuie ingrediente</string>
+    <string name="confirm_delete">Confirmă ștergerea</string>
+    <string name="delete_recipe_message">Ești sigur că vrei să ștergi această rețetă?</string>
+    <string name="cancel">Anulează</string>
+    <string name="save">Salvează</string>
+    <string name="add_notes">Adaugă note…</string>
+
+    <!-- Add Recipe -->
+    <string name="add_recipe_title">Adaugă rețetă</string>
+    <string name="from_camera">Din cameră</string>
+    <string name="from_photos">Din poze</string>
+    <string name="from_text">Din text</string>
+    <string name="from_url">Din URL</string>
+    <string name="from_youtube">Din YouTube</string>
+    <string name="paste_recipe_text">Lipește textul rețetei aici…</string>
+    <string name="enter_url">Introdu URL-ul rețetei…</string>
+    <string name="enter_youtube_url">Introdu URL-ul YouTube…</string>
+    <string name="extracting_recipe">Se extrage rețeta…</string>
+    <string name="extract">Extrage</string>
+    <string name="review_recipe">Revizuiește rețeta</string>
+    <string name="recipe_title">Titlu rețetă</string>
+    <string name="add_ingredient">Adaugă ingredient</string>
+    <string name="add_instruction">Adaugă instrucțiune</string>
+    <string name="select_tags">Selectează etichete</string>
+
+    <!-- Meal Plan -->
+    <string name="meal_plan_title">Plan Mese</string>
+    <string name="lunch">Prânz</string>
+    <string name="dinner">Cină</string>
+    <string name="today">Astăzi</string>
+    <string name="tomorrow">Mâine</string>
+    <string name="yesterday">Ieri</string>
+    <string name="empty_slot">Apasă pentru a adăuga</string>
+    <string name="swap_meals">Schimbă mesele</string>
+    <string name="remove_meal">Elimină</string>
+    <string name="select_recipe">Selectează rețetă</string>
+    <string name="generate_summary">Generează rezumat</string>
+    <string name="this_week">Săptămâna aceasta</string>
+    <string name="next_week">Săptămâna viitoare</string>
+    <string name="custom_range">Interval personalizat</string>
+    <string name="include_shopping_list">Include lista de cumpărături</string>
+    <string name="share_as_text">Distribuie ca text</string>
+    <string name="share_as_image">Distribuie ca imagine</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Setări</string>
+    <string name="api_key">Cheie API Claude</string>
+    <string name="api_key_hint">sk-ant-…</string>
+    <string name="api_key_saved">Cheie API salvată</string>
+    <string name="cloud_sync">Sincronizare cloud</string>
+    <string name="cloud_sync_description">Sincronizează rețetele între dispozitive</string>
+    <string name="sync_now">Sincronizează acum</string>
+    <string name="last_sync">Ultima sincronizare: %1$s</string>
+    <string name="never_synced">Niciodată sincronizat</string>
+    <string name="language">Limbă</string>
+    <string name="english">English</string>
+    <string name="swedish">Svenska</string>
+    <string name="romanian">Română</string>
+    <string name="import_data">Importă date</string>
+    <string name="export_data">Exportă date</string>
+    <string name="export_all">Exportă tot</string>
+    <string name="export_recipes">Exportă doar rețete</string>
+    <string name="export_meal_plans">Exportă doar planuri de mese</string>
+
+    <!-- Tags -->
+    <string name="tag_vegetarian">Vegetarian</string>
+    <string name="tag_vegan">Vegan</string>
+    <string name="tag_gluten_free">Fără gluten</string>
+    <string name="tag_lactose_free">Fără lactoză</string>
+    <string name="tag_nut_free">Fără nuci</string>
+    <string name="tag_low_carb">Carbohidrați puțini</string>
+    <string name="tag_keto">Keto</string>
+    <string name="tag_paleo">Paleo</string>
+    <string name="tag_breakfast">Mic dejun</string>
+    <string name="tag_lunch">Prânz</string>
+    <string name="tag_dinner">Cină</string>
+    <string name="tag_dessert">Desert</string>
+    <string name="tag_snack">Gustare</string>
+    <string name="tag_beverage">Băutură</string>
+    <string name="tag_appetizer">Aperitiv</string>
+    <string name="tag_main_course">Fel principal</string>
+    <string name="tag_side_dish">Garnitură</string>
+    <string name="tag_soup">Supă</string>
+    <string name="tag_salad">Salată</string>
+    <string name="tag_pork">Porc</string>
+    <string name="tag_chicken">Pui</string>
+    <string name="tag_beef">Vită</string>
+    <string name="tag_lamb">Miel</string>
+    <string name="tag_turkey">Curcan</string>
+    <string name="tag_fish">Pește</string>
+    <string name="tag_seafood">Fructe de mare</string>
+    <string name="tag_quick_easy">Rapid și ușor</string>
+    <string name="tag_slow_cook">Gătit lent</string>
+
+    <!-- Tag Categories -->
+    <string name="category_dietary">Restricții alimentare</string>
+    <string name="category_diet_styles">Stiluri de dietă</string>
+    <string name="category_meal_types">Tipuri de mese</string>
+    <string name="category_courses">Feluri</string>
+    <string name="category_protein">Tipuri de proteine</string>
+    <string name="category_cooking_style">Stil de gătit</string>
+
+    <!-- Errors -->
+    <string name="error_no_api_key">Adaugă cheia API Claude în Setări</string>
+    <string name="error_network">Eroare de rețea. Verifică conexiunea.</string>
+    <string name="error_extraction">Nu s-a putut extrage rețeta. Încearcă din nou.</string>
+    <string name="error_rate_limit">Limita API atinsă. Încearcă mai târziu.</string>
+    <string name="error_invalid_url">URL invalid</string>
+    <string name="error_empty_field">Acest câmp este obligatoriu</string>
+
+    <!-- General -->
+    <string name="ok">OK</string>
+    <string name="yes">Da</string>
+    <string name="no">Nu</string>
+    <string name="loading">Se încarcă…</string>
+    <string name="done">Gata</string>
+    <string name="unrated">Fără rating</string>
+</resources>
