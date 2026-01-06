@@ -1,5 +1,6 @@
 package com.kroslabs.recipemanager.ui.screens.recipes
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -364,6 +365,7 @@ private fun MetadataChip(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun FlowRow(
     modifier: Modifier = Modifier,
