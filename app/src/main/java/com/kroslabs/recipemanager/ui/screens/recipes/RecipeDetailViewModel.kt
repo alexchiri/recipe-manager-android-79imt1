@@ -150,8 +150,8 @@ class RecipeDetailViewModel @Inject constructor(
             )
         }
 
-        val data = QuickyShoppyData(items = items)
-        val json = Json.encodeToString(data)
+        val shoppyData = QuickyShoppyData(items = items)
+        val json = Json.encodeToString(shoppyData)
         val base64 = Base64.encodeToString(json.toByteArray(), Base64.NO_WRAP)
         val url = "quickyshoppy://import?data=$base64"
 
