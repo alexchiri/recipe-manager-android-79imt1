@@ -155,11 +155,10 @@ class RecipeDetailViewModel @Inject constructor(
         val base64 = Base64.encodeToString(json.toByteArray(), Base64.NO_WRAP)
         val url = "quickyshoppy://import?data=$base64"
 
-        val intent = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, url)
+        val intent = Intent(Intent.ACTION_VIEW).apply {
+            data = android.net.Uri.parse(url)
         }
-        context.startActivity(Intent.createChooser(intent, "Share Ingredients"))
+        context.startActivity(intent)
     }
 
     @Serializable
