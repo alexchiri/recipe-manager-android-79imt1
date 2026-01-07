@@ -34,14 +34,12 @@ sealed class ClaudeContent {
     @Serializable
     @SerialName("text")
     data class Text(
-        val type: String = "text",
         val text: String
     ) : ClaudeContent()
 
     @Serializable
     @SerialName("image")
     data class Image(
-        val type: String = "image",
         val source: ImageSource
     ) : ClaudeContent()
 }
