@@ -11,6 +11,7 @@ import com.kroslabs.recipemanager.data.repository.RecipeRepository
 import com.kroslabs.recipemanager.domain.model.Ingredient
 import com.kroslabs.recipemanager.domain.model.Language
 import com.kroslabs.recipemanager.domain.model.Recipe
+import com.kroslabs.recipemanager.util.DebugLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
@@ -52,19 +53,26 @@ class AddRecipeViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "AddRecipeViewModel"
+    }
+
     private val recipeId: String? = savedStateHandle["recipeId"]
 
     private val _uiState = MutableStateFlow(AddRecipeUiState())
     val uiState: StateFlow<AddRecipeUiState> = _uiState.asStateFlow()
 
     init {
+        DebugLogger.d(TAG, "init: recipeId=$recipeId")
         viewModelScope.launch {
             preferencesManager.language.collect { language ->
+                DebugLogger.d(TAG, "Language changed to: $language")
                 _uiState.update { it.copy(language = language) }
             }
         }
 
         if (recipeId != null) {
+            DebugLogger.i(TAG, "Loading recipe for edit: $recipeId")
             loadRecipeForEdit(recipeId)
         }
     }
@@ -98,13 +106,17 @@ class AddRecipeViewModel @Inject constructor(
 
     fun extractFromText() {
         val text = _uiState.value.textInput
+        DebugLogger.i(TAG, "extractFromText: Starting extraction, text length: ${text.length}")
+
         if (text.isBlank()) {
+            DebugLogger.w(TAG, "extractFromText: Text is blank")
             _uiState.update { it.copy(error = "Please enter recipe text") }
             return
         }
 
         val apiKey = preferencesManager.getApiKey()
         if (apiKey.isNullOrBlank()) {
+            DebugLogger.w(TAG, "extractFromText: No API key configured")
             _uiState.update { it.copy(error = "Please add your Claude API key in Settings") }
             return
         }
@@ -112,8 +124,10 @@ class AddRecipeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isExtracting = true, error = null) }
 
+            DebugLogger.d(TAG, "extractFromText: Calling RecipeExtractor...")
             recipeExtractor.extractFromText(text, apiKey)
                 .onSuccess { recipe ->
+                    DebugLogger.i(TAG, "extractFromText: Successfully extracted recipe: ${recipe.titleEnglish}")
                     _uiState.update {
                         it.copy(
                             extractedRecipe = recipe,
@@ -123,6 +137,7 @@ class AddRecipeViewModel @Inject constructor(
                     }
                 }
                 .onFailure { e ->
+                    DebugLogger.e(TAG, "extractFromText: Failed: ${e.message}", e)
                     _uiState.update {
                         it.copy(
                             error = e.message ?: "Failed to extract recipe",
@@ -135,24 +150,36 @@ class AddRecipeViewModel @Inject constructor(
 
     fun extractFromUrl() {
         val url = _uiState.value.urlInput
+        DebugLogger.i(TAG, "extractFromUrl: Starting extraction for URL: $url")
+
         if (url.isBlank()) {
+            DebugLogger.w(TAG, "extractFromUrl: URL is blank")
             _uiState.update { it.copy(error = "Please enter a URL") }
             return
         }
 
         val apiKey = preferencesManager.getApiKey()
         if (apiKey.isNullOrBlank()) {
+            DebugLogger.w(TAG, "extractFromUrl: No API key configured")
             _uiState.update { it.copy(error = "Please add your Claude API key in Settings") }
             return
         }
+
+        DebugLogger.d(TAG, "extractFromUrl: API key present, starting fetch")
 
         viewModelScope.launch {
             _uiState.update { it.copy(isExtracting = true, error = null) }
 
             try {
+                DebugLogger.d(TAG, "extractFromUrl: Fetching URL content...")
                 val htmlContent = fetchUrl(url)
+                DebugLogger.i(TAG, "extractFromUrl: Fetched ${htmlContent.length} characters from URL")
+                DebugLogger.d(TAG, "extractFromUrl: First 500 chars: ${htmlContent.take(500)}")
+
+                DebugLogger.d(TAG, "extractFromUrl: Sending to RecipeExtractor...")
                 recipeExtractor.extractFromUrl(url, htmlContent, apiKey)
                     .onSuccess { recipe ->
+                        DebugLogger.i(TAG, "extractFromUrl: Successfully extracted recipe: ${recipe.titleEnglish}")
                         _uiState.update {
                             it.copy(
                                 extractedRecipe = recipe,
@@ -162,6 +189,7 @@ class AddRecipeViewModel @Inject constructor(
                         }
                     }
                     .onFailure { e ->
+                        DebugLogger.e(TAG, "extractFromUrl: RecipeExtractor failed: ${e.message}", e)
                         _uiState.update {
                             it.copy(
                                 error = e.message ?: "Failed to extract recipe",
@@ -170,6 +198,7 @@ class AddRecipeViewModel @Inject constructor(
                         }
                     }
             } catch (e: Exception) {
+                DebugLogger.e(TAG, "extractFromUrl: Failed to fetch URL: ${e.message}", e)
                 _uiState.update {
                     it.copy(
                         error = "Failed to fetch URL: ${e.message}",
@@ -181,8 +210,11 @@ class AddRecipeViewModel @Inject constructor(
     }
 
     fun extractFromImage(context: Context, imageUri: Uri) {
+        DebugLogger.i(TAG, "extractFromImage: Starting extraction for URI: $imageUri")
+
         val apiKey = preferencesManager.getApiKey()
         if (apiKey.isNullOrBlank()) {
+            DebugLogger.w(TAG, "extractFromImage: No API key configured")
             _uiState.update { it.copy(error = "Please add your Claude API key in Settings") }
             return
         }
@@ -191,14 +223,18 @@ class AddRecipeViewModel @Inject constructor(
             _uiState.update { it.copy(isExtracting = true, error = null) }
 
             try {
+                DebugLogger.d(TAG, "extractFromImage: Reading image bytes...")
                 val inputStream = context.contentResolver.openInputStream(imageUri)
                 val bytes = inputStream?.readBytes() ?: throw Exception("Failed to read image")
                 inputStream.close()
 
                 val mimeType = context.contentResolver.getType(imageUri) ?: "image/jpeg"
+                DebugLogger.d(TAG, "extractFromImage: Image size: ${bytes.size} bytes, mimeType: $mimeType")
 
+                DebugLogger.d(TAG, "extractFromImage: Calling RecipeExtractor...")
                 recipeExtractor.extractFromImage(bytes, mimeType, apiKey)
                     .onSuccess { recipe ->
+                        DebugLogger.i(TAG, "extractFromImage: Successfully extracted recipe: ${recipe.titleEnglish}")
                         _uiState.update {
                             it.copy(
                                 extractedRecipe = recipe,
@@ -208,6 +244,7 @@ class AddRecipeViewModel @Inject constructor(
                         }
                     }
                     .onFailure { e ->
+                        DebugLogger.e(TAG, "extractFromImage: Failed: ${e.message}", e)
                         _uiState.update {
                             it.copy(
                                 error = e.message ?: "Failed to extract recipe",
@@ -216,6 +253,7 @@ class AddRecipeViewModel @Inject constructor(
                         }
                     }
             } catch (e: Exception) {
+                DebugLogger.e(TAG, "extractFromImage: Failed to process image: ${e.message}", e)
                 _uiState.update {
                     it.copy(
                         error = "Failed to process image: ${e.message}",
@@ -227,18 +265,88 @@ class AddRecipeViewModel @Inject constructor(
     }
 
     private suspend fun fetchUrl(urlString: String): String = withContext(Dispatchers.IO) {
-        val url = URL(urlString)
-        val connection = url.openConnection() as HttpURLConnection
-        connection.requestMethod = "GET"
-        connection.setRequestProperty("User-Agent", "Mozilla/5.0")
-        connection.connectTimeout = 10000
-        connection.readTimeout = 10000
+        DebugLogger.d(TAG, "fetchUrl: Starting fetch for: $urlString")
 
-        val reader = BufferedReader(InputStreamReader(connection.inputStream))
-        val content = reader.readText()
-        reader.close()
-        connection.disconnect()
-        content
+        var currentUrl = urlString
+        var redirectCount = 0
+        val maxRedirects = 5
+
+        while (redirectCount < maxRedirects) {
+            val url = URL(currentUrl)
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.instanceFollowRedirects = false
+
+            // Set comprehensive headers to avoid HTTP 400 errors
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+            connection.setRequestProperty("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8")
+            connection.setRequestProperty("Accept-Language", "en-US,en;q=0.9")
+            connection.setRequestProperty("Accept-Encoding", "identity")
+            connection.setRequestProperty("Connection", "keep-alive")
+            connection.setRequestProperty("Upgrade-Insecure-Requests", "1")
+
+            connection.connectTimeout = 15000
+            connection.readTimeout = 15000
+
+            DebugLogger.d(TAG, "fetchUrl: Connecting to: $currentUrl")
+
+            try {
+                connection.connect()
+                val responseCode = connection.responseCode
+                DebugLogger.d(TAG, "fetchUrl: Response code: $responseCode")
+
+                when (responseCode) {
+                    HttpURLConnection.HTTP_OK -> {
+                        val contentType = connection.contentType ?: ""
+                        DebugLogger.d(TAG, "fetchUrl: Content-Type: $contentType")
+
+                        val inputStream = connection.inputStream
+                        val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
+                        val content = reader.readText()
+                        reader.close()
+                        connection.disconnect()
+
+                        DebugLogger.i(TAG, "fetchUrl: Successfully fetched ${content.length} characters")
+                        return@withContext content
+                    }
+                    HttpURLConnection.HTTP_MOVED_PERM,
+                    HttpURLConnection.HTTP_MOVED_TEMP,
+                    HttpURLConnection.HTTP_SEE_OTHER,
+                    307, 308 -> {
+                        val location = connection.getHeaderField("Location")
+                        connection.disconnect()
+
+                        if (location.isNullOrBlank()) {
+                            DebugLogger.e(TAG, "fetchUrl: Redirect without Location header")
+                            throw Exception("Redirect without Location header")
+                        }
+
+                        currentUrl = if (location.startsWith("http")) {
+                            location
+                        } else {
+                            URL(url, location).toString()
+                        }
+                        DebugLogger.d(TAG, "fetchUrl: Redirecting to: $currentUrl")
+                        redirectCount++
+                    }
+                    else -> {
+                        val errorStream = connection.errorStream
+                        val errorBody = errorStream?.bufferedReader()?.readText() ?: "No error body"
+                        connection.disconnect()
+
+                        DebugLogger.e(TAG, "fetchUrl: HTTP error $responseCode: $errorBody")
+                        throw Exception("HTTP error $responseCode: ${connection.responseMessage}")
+                    }
+                }
+            } catch (e: Exception) {
+                connection.disconnect()
+                DebugLogger.e(TAG, "fetchUrl: Exception during fetch: ${e.message}", e)
+                throw e
+            }
+        }
+
+        DebugLogger.e(TAG, "fetchUrl: Too many redirects")
+        throw Exception("Too many redirects")
     }
 
     fun updateTitle(language: Language, title: String) {
@@ -367,34 +475,50 @@ class AddRecipeViewModel @Inject constructor(
     }
 
     fun saveRecipe() {
+        DebugLogger.i(TAG, "saveRecipe: Starting save operation")
+
         val recipe = _uiState.value.editingRecipe
         if (recipe == null) {
+            DebugLogger.w(TAG, "saveRecipe: No recipe to save")
             _uiState.update { it.copy(error = "No recipe to save") }
             return
         }
 
+        DebugLogger.d(TAG, "saveRecipe: Recipe ID: ${recipe.id}, title: ${recipe.titleEnglish}")
+
         if (recipe.titleEnglish.isBlank()) {
+            DebugLogger.w(TAG, "saveRecipe: Title is blank")
             _uiState.update { it.copy(error = "Recipe title is required") }
             return
         }
 
         if (recipe.ingredientsEnglish.isEmpty()) {
+            DebugLogger.w(TAG, "saveRecipe: No ingredients")
             _uiState.update { it.copy(error = "At least one ingredient is required") }
             return
         }
 
         if (recipe.instructionsEnglish.isEmpty()) {
+            DebugLogger.w(TAG, "saveRecipe: No instructions")
             _uiState.update { it.copy(error = "At least one instruction is required") }
             return
         }
 
         viewModelScope.launch {
-            if (_uiState.value.isEditMode) {
-                recipeRepository.updateRecipe(recipe)
-            } else {
-                recipeRepository.insertRecipe(recipe)
+            try {
+                if (_uiState.value.isEditMode) {
+                    DebugLogger.d(TAG, "saveRecipe: Updating existing recipe")
+                    recipeRepository.updateRecipe(recipe)
+                } else {
+                    DebugLogger.d(TAG, "saveRecipe: Inserting new recipe")
+                    recipeRepository.insertRecipe(recipe)
+                }
+                DebugLogger.i(TAG, "saveRecipe: Recipe saved successfully")
+                _uiState.update { it.copy(savedRecipeId = recipe.id) }
+            } catch (e: Exception) {
+                DebugLogger.e(TAG, "saveRecipe: Failed to save recipe: ${e.message}", e)
+                _uiState.update { it.copy(error = "Failed to save recipe: ${e.message}") }
             }
-            _uiState.update { it.copy(savedRecipeId = recipe.id) }
         }
     }
 

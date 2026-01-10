@@ -7,6 +7,7 @@ import com.kroslabs.recipemanager.data.repository.RecipeRepository
 import com.kroslabs.recipemanager.domain.model.Language
 import com.kroslabs.recipemanager.domain.model.Recipe
 import com.kroslabs.recipemanager.domain.model.SortOption
+import com.kroslabs.recipemanager.util.DebugLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -30,15 +31,21 @@ class RecipeListViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "RecipeListViewModel"
+    }
+
     private val _uiState = MutableStateFlow(RecipeListUiState())
     val uiState: StateFlow<RecipeListUiState> = _uiState.asStateFlow()
 
     init {
+        DebugLogger.d(TAG, "init: Starting RecipeListViewModel")
         viewModelScope.launch {
             combine(
                 recipeRepository.getAllRecipes(),
                 preferencesManager.language
             ) { recipes, language ->
+                DebugLogger.d(TAG, "init: Loaded ${recipes.size} recipes, language: $language")
                 _uiState.update { state ->
                     val filtered = recipeRepository.filterAndSortRecipes(
                         recipes = recipes,
@@ -46,6 +53,7 @@ class RecipeListViewModel @Inject constructor(
                         selectedTags = state.selectedTags,
                         sortOption = state.sortOption
                     )
+                    DebugLogger.d(TAG, "init: Filtered to ${filtered.size} recipes")
                     state.copy(
                         recipes = recipes,
                         filteredRecipes = filtered,

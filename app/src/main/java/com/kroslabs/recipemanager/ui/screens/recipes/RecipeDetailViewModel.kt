@@ -11,6 +11,7 @@ import com.kroslabs.recipemanager.data.repository.RecipeRepository
 import com.kroslabs.recipemanager.domain.model.Language
 import com.kroslabs.recipemanager.domain.model.Recipe
 import com.kroslabs.recipemanager.domain.model.RecipeTag
+import com.kroslabs.recipemanager.util.DebugLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -34,14 +35,20 @@ class RecipeDetailViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "RecipeDetailViewModel"
+    }
+
     private val recipeId: String = savedStateHandle["recipeId"] ?: ""
 
     private val _uiState = MutableStateFlow(RecipeDetailUiState())
     val uiState: StateFlow<RecipeDetailUiState> = _uiState.asStateFlow()
 
     init {
+        DebugLogger.d(TAG, "init: Loading recipe with ID: $recipeId")
         viewModelScope.launch {
             preferencesManager.language.collect { language ->
+                DebugLogger.d(TAG, "Language updated: $language")
                 _uiState.update { it.copy(language = language) }
             }
         }
@@ -50,7 +57,9 @@ class RecipeDetailViewModel @Inject constructor(
 
     private fun loadRecipe() {
         viewModelScope.launch {
+            DebugLogger.d(TAG, "loadRecipe: Fetching recipe $recipeId")
             val recipe = recipeRepository.getRecipeById(recipeId)
+            DebugLogger.d(TAG, "loadRecipe: Recipe loaded, title: ${recipe?.titleEnglish}")
             _uiState.update {
                 it.copy(recipe = recipe, isLoading = false)
             }
@@ -77,13 +86,16 @@ class RecipeDetailViewModel @Inject constructor(
     fun deleteRecipe() {
         viewModelScope.launch {
             val recipe = _uiState.value.recipe ?: return@launch
+            DebugLogger.i(TAG, "deleteRecipe: Deleting recipe ${recipe.id} - ${recipe.titleEnglish}")
             recipeRepository.deleteRecipe(recipe)
+            DebugLogger.d(TAG, "deleteRecipe: Recipe deleted successfully")
             _uiState.update { it.copy(isDeleted = true, showDeleteDialog = false) }
         }
     }
 
     fun shareRecipe(context: Context) {
         val recipe = _uiState.value.recipe ?: return
+        DebugLogger.i(TAG, "shareRecipe: Sharing recipe ${recipe.titleEnglish}")
         val language = _uiState.value.language
 
         val text = buildString {
@@ -142,6 +154,7 @@ class RecipeDetailViewModel @Inject constructor(
     fun shareIngredients(context: Context) {
         val recipe = _uiState.value.recipe ?: return
         val language = _uiState.value.language
+        DebugLogger.i(TAG, "shareIngredients: Sharing ${recipe.getIngredients(language).size} ingredients for ${recipe.titleEnglish}")
 
         val items = recipe.getIngredients(language).map { ingredient ->
             QuickyShoppyItem(

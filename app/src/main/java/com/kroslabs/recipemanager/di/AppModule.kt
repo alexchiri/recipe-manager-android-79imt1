@@ -6,12 +6,14 @@ import com.kroslabs.recipemanager.data.local.AppDatabase
 import com.kroslabs.recipemanager.data.local.MealPlanDao
 import com.kroslabs.recipemanager.data.local.RecipeDao
 import com.kroslabs.recipemanager.data.remote.ClaudeApiService
+import com.kroslabs.recipemanager.util.DebugLogger
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import kotlinx.serialization.json.Json
+import okhttp3.Interceptor
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
@@ -59,7 +61,30 @@ object AppModule {
     @Provides
     @Singleton
     fun provideOkHttpClient(): OkHttpClient {
+        val debugLoggerInterceptor = Interceptor { chain ->
+            val request = chain.request()
+            DebugLogger.i("ClaudeAPI", "Request: ${request.method} ${request.url}")
+            DebugLogger.d("ClaudeAPI", "Request headers: ${request.headers}")
+
+            val startTime = System.currentTimeMillis()
+            try {
+                val response = chain.proceed(request)
+                val duration = System.currentTimeMillis() - startTime
+
+                DebugLogger.i("ClaudeAPI", "Response: ${response.code} ${response.message} (${duration}ms)")
+                if (!response.isSuccessful) {
+                    val errorBody = response.peekBody(10000).string()
+                    DebugLogger.e("ClaudeAPI", "Error response body: $errorBody")
+                }
+                response
+            } catch (e: Exception) {
+                DebugLogger.e("ClaudeAPI", "Request failed: ${e.message}", e)
+                throw e
+            }
+        }
+
         return OkHttpClient.Builder()
+            .addInterceptor(debugLoggerInterceptor)
             .addInterceptor(HttpLoggingInterceptor().apply {
                 level = HttpLoggingInterceptor.Level.BODY
             })

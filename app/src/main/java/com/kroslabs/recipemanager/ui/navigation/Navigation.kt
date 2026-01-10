@@ -25,6 +25,7 @@ import com.kroslabs.recipemanager.ui.screens.addrecipe.AddRecipeScreen
 import com.kroslabs.recipemanager.ui.screens.mealplan.MealPlanScreen
 import com.kroslabs.recipemanager.ui.screens.recipes.RecipeDetailScreen
 import com.kroslabs.recipemanager.ui.screens.recipes.RecipeListScreen
+import com.kroslabs.recipemanager.ui.screens.settings.LogViewerScreen
 import com.kroslabs.recipemanager.ui.screens.settings.SettingsScreen
 
 sealed class Screen(val route: String) {
@@ -38,6 +39,7 @@ sealed class Screen(val route: String) {
     }
     data object MealPlan : Screen("meal_plan")
     data object Settings : Screen("settings")
+    data object LogViewer : Screen("log_viewer")
 }
 
 sealed class BottomNavItem(
@@ -155,7 +157,17 @@ fun MainNavigation() {
             }
 
             composable(Screen.Settings.route) {
-                SettingsScreen()
+                SettingsScreen(
+                    onNavigateToLogs = {
+                        navController.navigate(Screen.LogViewer.route)
+                    }
+                )
+            }
+
+            composable(Screen.LogViewer.route) {
+                LogViewerScreen(
+                    onNavigateBack = { navController.popBackStack() }
+                )
             }
         }
     }

@@ -8,6 +8,7 @@ import com.kroslabs.recipemanager.data.local.PreferencesManager
 import com.kroslabs.recipemanager.data.repository.MealPlanRepository
 import com.kroslabs.recipemanager.data.repository.RecipeRepository
 import com.kroslabs.recipemanager.domain.model.*
+import com.kroslabs.recipemanager.util.DebugLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -36,6 +37,10 @@ class MealPlanViewModel @Inject constructor(
     private val preferencesManager: PreferencesManager
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "MealPlanViewModel"
+    }
+
     private val _uiState = MutableStateFlow(MealPlanUiState())
     val uiState: StateFlow<MealPlanUiState> = _uiState.asStateFlow()
 
@@ -47,12 +52,14 @@ class MealPlanViewModel @Inject constructor(
     private val dateRange = calculateDateRange()
 
     init {
+        DebugLogger.d(TAG, "init: Starting MealPlanViewModel, date range: ${dateRange.first} to ${dateRange.second}")
         viewModelScope.launch {
             combine(
                 mealPlanRepository.getMealPlansByDateRange(dateRange.first, dateRange.second),
                 recipeRepository.getAllRecipes(),
                 preferencesManager.language
             ) { mealPlans, recipes, language ->
+                DebugLogger.d(TAG, "init: Loaded ${mealPlans.size} meal plans, ${recipes.size} recipes")
                 val mealPlanMap = mealPlans.associateBy { LocalDate.parse(it.date) }
                 _uiState.update { state ->
                     state.copy(

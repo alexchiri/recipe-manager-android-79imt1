@@ -3,6 +3,7 @@ package com.kroslabs.recipemanager.data.remote
 import android.util.Base64
 import com.kroslabs.recipemanager.domain.model.Ingredient
 import com.kroslabs.recipemanager.domain.model.Recipe
+import com.kroslabs.recipemanager.util.DebugLogger
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -22,6 +23,8 @@ class RecipeExtractor @Inject constructor(
     private val json = Json { ignoreUnknownKeys = true }
 
     companion object {
+        private const val TAG = "RecipeExtractor"
+
         private const val EXTRACTION_PROMPT = """
 You are a recipe extraction assistant. Extract the recipe information from the provided content and return it as a JSON object.
 
@@ -84,7 +87,10 @@ Return JSON with this structure:
         mimeType: String,
         apiKey: String
     ): Result<Recipe> = runCatching {
+        DebugLogger.i(TAG, "extractFromImage: Starting, image size: ${imageBytes.size} bytes, mimeType: $mimeType")
+
         val base64Image = Base64.encodeToString(imageBytes, Base64.NO_WRAP)
+        DebugLogger.d(TAG, "extractFromImage: Base64 encoded, length: ${base64Image.length}")
 
         val request = ClaudeRequest(
             messages = listOf(
@@ -103,14 +109,22 @@ Return JSON with this structure:
             )
         )
 
+        DebugLogger.d(TAG, "extractFromImage: Sending request to Claude API...")
         val response = claudeApiService.createMessage(apiKey, request = request)
-        parseRecipeResponse(response)
+        DebugLogger.i(TAG, "extractFromImage: Received response, parsing...")
+
+        val recipe = parseRecipeResponse(response)
+        DebugLogger.i(TAG, "extractFromImage: Successfully parsed recipe: ${recipe.titleEnglish}")
+        recipe
     }
 
     suspend fun extractFromText(
         text: String,
         apiKey: String
     ): Result<Recipe> = runCatching {
+        DebugLogger.i(TAG, "extractFromText: Starting, text length: ${text.length}")
+        DebugLogger.d(TAG, "extractFromText: Text preview: ${text.take(200)}...")
+
         val request = ClaudeRequest(
             messages = listOf(
                 ClaudeMessage(
@@ -124,8 +138,13 @@ Return JSON with this structure:
             )
         )
 
+        DebugLogger.d(TAG, "extractFromText: Sending request to Claude API...")
         val response = claudeApiService.createMessage(apiKey, request = request)
-        parseRecipeResponse(response)
+        DebugLogger.i(TAG, "extractFromText: Received response, parsing...")
+
+        val recipe = parseRecipeResponse(response)
+        DebugLogger.i(TAG, "extractFromText: Successfully parsed recipe: ${recipe.titleEnglish}")
+        recipe
     }
 
     suspend fun extractFromUrl(
@@ -133,6 +152,9 @@ Return JSON with this structure:
         htmlContent: String,
         apiKey: String
     ): Result<Recipe> = runCatching {
+        DebugLogger.i(TAG, "extractFromUrl: Starting, URL: $url, content length: ${htmlContent.length}")
+        DebugLogger.d(TAG, "extractFromUrl: HTML preview: ${htmlContent.take(500)}...")
+
         val request = ClaudeRequest(
             messages = listOf(
                 ClaudeMessage(
@@ -146,8 +168,13 @@ Return JSON with this structure:
             )
         )
 
+        DebugLogger.d(TAG, "extractFromUrl: Sending request to Claude API...")
         val response = claudeApiService.createMessage(apiKey, request = request)
-        parseRecipeResponse(response)
+        DebugLogger.i(TAG, "extractFromUrl: Received response, parsing...")
+
+        val recipe = parseRecipeResponse(response)
+        DebugLogger.i(TAG, "extractFromUrl: Successfully parsed recipe: ${recipe.titleEnglish}")
+        recipe
     }
 
     suspend fun translateRecipe(
@@ -186,29 +213,48 @@ Return JSON with this structure:
     }
 
     private fun parseRecipeResponse(response: ClaudeResponse): Recipe {
+        DebugLogger.d(TAG, "parseRecipeResponse: Starting to parse response")
+
         val responseText = response.content.firstOrNull { it.type == "text" }?.text
-            ?: throw Exception("No text response from API")
+            ?: run {
+                DebugLogger.e(TAG, "parseRecipeResponse: No text response from API")
+                throw Exception("No text response from API")
+            }
+
+        DebugLogger.d(TAG, "parseRecipeResponse: Response text length: ${responseText.length}")
+        DebugLogger.d(TAG, "parseRecipeResponse: Response preview: ${responseText.take(500)}...")
 
         val recipeJson = extractJsonFromResponse(responseText)
-        val jsonObject = json.parseToJsonElement(recipeJson).jsonObject
+        DebugLogger.d(TAG, "parseRecipeResponse: Extracted JSON length: ${recipeJson.length}")
 
-        return Recipe(
-            id = UUID.randomUUID().toString(),
-            titleEnglish = jsonObject["titleEnglish"]?.jsonPrimitive?.content ?: "",
-            titleSwedish = jsonObject["titleSwedish"]?.jsonPrimitive?.content ?: "",
-            titleRomanian = jsonObject["titleRomanian"]?.jsonPrimitive?.content ?: "",
-            ingredientsEnglish = parseIngredientArray(jsonObject["ingredientsEnglish"]),
-            ingredientsSwedish = parseIngredientArray(jsonObject["ingredientsSwedish"]),
-            ingredientsRomanian = parseIngredientArray(jsonObject["ingredientsRomanian"]),
-            instructionsEnglish = parseStringArray(jsonObject["instructionsEnglish"]),
-            instructionsSwedish = parseStringArray(jsonObject["instructionsSwedish"]),
-            instructionsRomanian = parseStringArray(jsonObject["instructionsRomanian"]),
-            servings = jsonObject["servings"]?.jsonPrimitive?.intOrNull,
-            prepTime = jsonObject["prepTime"]?.jsonPrimitive?.contentOrNull,
-            cookTime = jsonObject["cookTime"]?.jsonPrimitive?.contentOrNull,
-            tags = parseStringArray(jsonObject["tags"]),
-            detectedLanguage = jsonObject["detectedLanguage"]?.jsonPrimitive?.contentOrNull
-        )
+        try {
+            val jsonObject = json.parseToJsonElement(recipeJson).jsonObject
+
+            val recipe = Recipe(
+                id = UUID.randomUUID().toString(),
+                titleEnglish = jsonObject["titleEnglish"]?.jsonPrimitive?.content ?: "",
+                titleSwedish = jsonObject["titleSwedish"]?.jsonPrimitive?.content ?: "",
+                titleRomanian = jsonObject["titleRomanian"]?.jsonPrimitive?.content ?: "",
+                ingredientsEnglish = parseIngredientArray(jsonObject["ingredientsEnglish"]),
+                ingredientsSwedish = parseIngredientArray(jsonObject["ingredientsSwedish"]),
+                ingredientsRomanian = parseIngredientArray(jsonObject["ingredientsRomanian"]),
+                instructionsEnglish = parseStringArray(jsonObject["instructionsEnglish"]),
+                instructionsSwedish = parseStringArray(jsonObject["instructionsSwedish"]),
+                instructionsRomanian = parseStringArray(jsonObject["instructionsRomanian"]),
+                servings = jsonObject["servings"]?.jsonPrimitive?.intOrNull,
+                prepTime = jsonObject["prepTime"]?.jsonPrimitive?.contentOrNull,
+                cookTime = jsonObject["cookTime"]?.jsonPrimitive?.contentOrNull,
+                tags = parseStringArray(jsonObject["tags"]),
+                detectedLanguage = jsonObject["detectedLanguage"]?.jsonPrimitive?.contentOrNull
+            )
+
+            DebugLogger.i(TAG, "parseRecipeResponse: Parsed recipe - title: ${recipe.titleEnglish}, ingredients: ${recipe.ingredientsEnglish.size}, instructions: ${recipe.instructionsEnglish.size}")
+            return recipe
+        } catch (e: Exception) {
+            DebugLogger.e(TAG, "parseRecipeResponse: Failed to parse JSON: ${e.message}", e)
+            DebugLogger.e(TAG, "parseRecipeResponse: JSON content: $recipeJson")
+            throw e
+        }
     }
 
     private fun extractJsonFromResponse(text: String): String {

@@ -10,6 +10,7 @@ import com.kroslabs.recipemanager.data.repository.RecipeRepository
 import com.kroslabs.recipemanager.domain.model.Language
 import com.kroslabs.recipemanager.domain.model.MealPlan
 import com.kroslabs.recipemanager.domain.model.Recipe
+import com.kroslabs.recipemanager.util.DebugLogger
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -39,6 +40,10 @@ class SettingsViewModel @Inject constructor(
     private val mealPlanRepository: MealPlanRepository
 ) : ViewModel() {
 
+    companion object {
+        private const val TAG = "SettingsViewModel"
+    }
+
     private val json = Json {
         prettyPrint = true
         ignoreUnknownKeys = true
@@ -48,7 +53,10 @@ class SettingsViewModel @Inject constructor(
     val uiState: StateFlow<SettingsUiState> = _uiState.asStateFlow()
 
     init {
-        _uiState.update { it.copy(apiKey = preferencesManager.getApiKey() ?: "") }
+        DebugLogger.d(TAG, "init: Starting SettingsViewModel")
+        val savedApiKey = preferencesManager.getApiKey()
+        DebugLogger.d(TAG, "init: API key present=${!savedApiKey.isNullOrBlank()}")
+        _uiState.update { it.copy(apiKey = savedApiKey ?: "") }
 
         viewModelScope.launch {
             combine(
@@ -56,6 +64,7 @@ class SettingsViewModel @Inject constructor(
                 preferencesManager.cloudSyncEnabled,
                 preferencesManager.lastSync
             ) { language, syncEnabled, lastSync ->
+                DebugLogger.d(TAG, "init: Preferences loaded - language: $language, cloudSync: $syncEnabled")
                 _uiState.update { state ->
                     state.copy(
                         language = language,
@@ -73,7 +82,9 @@ class SettingsViewModel @Inject constructor(
 
     fun saveApiKey() {
         val apiKey = _uiState.value.apiKey.trim()
+        DebugLogger.i(TAG, "saveApiKey: Saving API key, length: ${apiKey.length}, starts with: ${apiKey.take(10)}...")
         preferencesManager.setApiKey(apiKey.takeIf { it.isNotBlank() })
+        DebugLogger.d(TAG, "saveApiKey: API key saved successfully")
         _uiState.update { it.copy(message = "API key saved") }
     }
 
@@ -112,10 +123,12 @@ class SettingsViewModel @Inject constructor(
     }
 
     suspend fun exportData(context: Context, uri: Uri, type: ExportType) {
+        DebugLogger.i(TAG, "exportData: Starting export, type: $type, uri: $uri")
         viewModelScope.launch {
             try {
                 val recipes = recipeRepository.getAllRecipes().first()
                 val mealPlans = mealPlanRepository.getAllMealPlans().first()
+                DebugLogger.d(TAG, "exportData: Loaded ${recipes.size} recipes, ${mealPlans.size} meal plans")
 
                 val exportData = when (type) {
                     ExportType.ALL -> ExportData(
@@ -134,41 +147,51 @@ class SettingsViewModel @Inject constructor(
                 }
 
                 val jsonString = json.encodeToString(exportData)
+                DebugLogger.d(TAG, "exportData: Serialized JSON, length: ${jsonString.length}")
 
                 context.contentResolver.openOutputStream(uri)?.use { outputStream ->
                     outputStream.write(jsonString.toByteArray())
                 }
 
+                DebugLogger.i(TAG, "exportData: Export successful")
                 _uiState.update { it.copy(message = "Export successful", showExportDialog = false) }
             } catch (e: Exception) {
+                DebugLogger.e(TAG, "exportData: Export failed: ${e.message}", e)
                 _uiState.update { it.copy(message = "Export failed: ${e.message}") }
             }
         }
     }
 
     suspend fun importData(context: Context, uri: Uri) {
+        DebugLogger.i(TAG, "importData: Starting import from uri: $uri")
         viewModelScope.launch {
             try {
                 val jsonString = context.contentResolver.openInputStream(uri)?.use { inputStream ->
                     BufferedReader(InputStreamReader(inputStream)).readText()
                 } ?: throw Exception("Failed to read file")
 
+                DebugLogger.d(TAG, "importData: Read ${jsonString.length} characters")
                 val importData = json.decodeFromString<ExportData>(jsonString)
+                DebugLogger.d(TAG, "importData: Parsed data - recipes: ${importData.recipes?.size ?: 0}, mealPlans: ${importData.mealPlans?.size ?: 0}")
 
                 importData.recipes?.let { recipes ->
+                    DebugLogger.d(TAG, "importData: Inserting ${recipes.size} recipes")
                     recipeRepository.insertRecipes(recipes)
                 }
 
                 importData.mealPlans?.let { mealPlans ->
+                    DebugLogger.d(TAG, "importData: Inserting ${mealPlans.size} meal plans")
                     mealPlanRepository.insertMealPlans(mealPlans)
                 }
 
                 val recipeCount = importData.recipes?.size ?: 0
                 val mealPlanCount = importData.mealPlans?.size ?: 0
+                DebugLogger.i(TAG, "importData: Import successful - $recipeCount recipes, $mealPlanCount meal plans")
                 _uiState.update {
                     it.copy(message = "Imported $recipeCount recipes and $mealPlanCount meal plans")
                 }
             } catch (e: Exception) {
+                DebugLogger.e(TAG, "importData: Import failed: ${e.message}", e)
                 _uiState.update { it.copy(message = "Import failed: ${e.message}") }
             }
         }
