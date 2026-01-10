@@ -25,6 +25,9 @@ class RecipeExtractor @Inject constructor(
     companion object {
         private const val TAG = "RecipeExtractor"
 
+        // Max characters to send to API (roughly ~50k tokens to stay well under 200k limit)
+        private const val MAX_CONTENT_LENGTH = 150_000
+
         private const val EXTRACTION_PROMPT = """
 You are a recipe extraction assistant. Extract the recipe information from the provided content and return it as a JSON object.
 
@@ -80,6 +83,77 @@ Return JSON with this structure:
   "notesRomanian": "..." or null
 }
 """
+
+        /**
+         * Cleans HTML content by removing non-essential elements and extracting text.
+         * This reduces the content size to stay within Claude API token limits.
+         */
+        fun cleanHtmlContent(html: String): String {
+            var content = html
+
+            // Remove script tags and content
+            content = content.replace(Regex("<script[^>]*>[\\s\\S]*?</script>", RegexOption.IGNORE_CASE), "")
+
+            // Remove style tags and content
+            content = content.replace(Regex("<style[^>]*>[\\s\\S]*?</style>", RegexOption.IGNORE_CASE), "")
+
+            // Remove noscript tags and content
+            content = content.replace(Regex("<noscript[^>]*>[\\s\\S]*?</noscript>", RegexOption.IGNORE_CASE), "")
+
+            // Remove SVG elements
+            content = content.replace(Regex("<svg[^>]*>[\\s\\S]*?</svg>", RegexOption.IGNORE_CASE), "")
+
+            // Remove navigation elements
+            content = content.replace(Regex("<nav[^>]*>[\\s\\S]*?</nav>", RegexOption.IGNORE_CASE), "")
+
+            // Remove header elements (site headers, not h1-h6)
+            content = content.replace(Regex("<header[^>]*>[\\s\\S]*?</header>", RegexOption.IGNORE_CASE), "")
+
+            // Remove footer elements
+            content = content.replace(Regex("<footer[^>]*>[\\s\\S]*?</footer>", RegexOption.IGNORE_CASE), "")
+
+            // Remove aside elements (sidebars, ads)
+            content = content.replace(Regex("<aside[^>]*>[\\s\\S]*?</aside>", RegexOption.IGNORE_CASE), "")
+
+            // Remove form elements
+            content = content.replace(Regex("<form[^>]*>[\\s\\S]*?</form>", RegexOption.IGNORE_CASE), "")
+
+            // Remove iframe elements
+            content = content.replace(Regex("<iframe[^>]*>[\\s\\S]*?</iframe>", RegexOption.IGNORE_CASE), "")
+            content = content.replace(Regex("<iframe[^>]*/>", RegexOption.IGNORE_CASE), "")
+
+            // Remove HTML comments
+            content = content.replace(Regex("<!--[\\s\\S]*?-->"), "")
+
+            // Remove common ad/tracking div patterns
+            content = content.replace(Regex("<div[^>]*class=\"[^\"]*(?:ad-|ads-|advertisement|sidebar|comment|social|share|related-posts)[^\"]*\"[^>]*>[\\s\\S]*?</div>", RegexOption.IGNORE_CASE), "")
+
+            // Remove all remaining HTML tags but keep text content
+            content = content.replace(Regex("<[^>]+>"), " ")
+
+            // Decode common HTML entities
+            content = content
+                .replace("&nbsp;", " ")
+                .replace("&amp;", "&")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&quot;", "\"")
+                .replace("&#39;", "'")
+                .replace("&apos;", "'")
+
+            // Collapse multiple whitespace into single space
+            content = content.replace(Regex("\\s+"), " ")
+
+            // Trim and limit length
+            content = content.trim()
+
+            if (content.length > MAX_CONTENT_LENGTH) {
+                DebugLogger.w(TAG, "cleanHtmlContent: Content still too long (${content.length}), truncating to $MAX_CONTENT_LENGTH")
+                content = content.take(MAX_CONTENT_LENGTH)
+            }
+
+            return content
+        }
     }
 
     suspend fun extractFromImage(
@@ -155,13 +229,18 @@ Return JSON with this structure:
         DebugLogger.i(TAG, "extractFromUrl: Starting, URL: $url, content length: ${htmlContent.length}")
         DebugLogger.d(TAG, "extractFromUrl: HTML preview: ${htmlContent.take(500)}...")
 
+        // Clean HTML to reduce token count and stay within API limits
+        val cleanedContent = cleanHtmlContent(htmlContent)
+        DebugLogger.i(TAG, "extractFromUrl: Cleaned content length: ${cleanedContent.length} (reduced from ${htmlContent.length})")
+        DebugLogger.d(TAG, "extractFromUrl: Cleaned content preview: ${cleanedContent.take(500)}...")
+
         val request = ClaudeRequest(
             messages = listOf(
                 ClaudeMessage(
                     role = "user",
                     content = listOf(
                         ClaudeContent.Text(
-                            text = "$EXTRACTION_PROMPT\n\nURL: $url\n\nPage content:\n$htmlContent"
+                            text = "$EXTRACTION_PROMPT\n\nURL: $url\n\nPage content:\n$cleanedContent"
                         )
                     )
                 )
